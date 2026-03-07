@@ -1,0 +1,6 @@
+venv
+
+projectcontext/
+chromadocs/
+livekitdocs/
+.env
