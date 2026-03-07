@@ -1,0 +1,603 @@
+{
+  "workflow_title": "Deploying and Managing Agents on Kubernetes Infrastructure",
+  "workflow_summary": "This knowledge transfer session covers the end-to-end process of developing, configuring, deploying, and monitoring uAgents on a Kubernetes cluster. It details the two main repositories involved (agent code and infrastructure config), the CI/CD pipeline using GitHub Actions and ArgoCD, database state management for multi-replica agents, and log monitoring via Grafana. The session concludes with a code walkthrough and demo of a new 'Unified Movie Agent' designed to replace a complex 29-agent system.",
+  "steps": [
+    {
+      "step_id": 1,
+      "title": "Review Current Agent Architecture and Limitations",
+      "summary": "Discuss the current state of the movie generation agent, which uses 29 separate agents. Identify limitations with hosting on Agentverse (no payment support) and the Innovation Lab server (resource constraints).",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "ASI1 (Chat Interface)",
+      "what_is_on_screen": "ASI1 chat interface showing interactions with '@reel-agents', generating keyframe images and video clips.",
+      "timestamp_start": "00:00",
+      "timestamp_end": "03:30",
+      "transcript_snippet": "deploying 29 agents on IL server is not like very good right... the payments are not supported on agentverse right... so I converted everything into a single agent.",
+      "dependencies": [],
+      "verification": "",
+      "keywords": [
+        "architecture",
+        "agentverse",
+        "IL server",
+        "payments",
+        "stripe"
+      ],
+      "important_visual_moment": false,
+      "visual_description": "",
+      "frame_file": "frame_00_00.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 2,
+      "title": "Introduce the Agent Code Repository",
+      "summary": "Navigate to the `innovation-lab-agents` GitHub repository, which contains the source code for all production-grade agents.",
+      "step_type": "navigation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "browser",
+      "what_is_on_screen": "GitHub repository page for `fetchai/innovation-lab-agents`, showing folders like `.github`, `agents-db`, `agents`, `agents_shared`.",
+      "timestamp_start": "03:30",
+      "timestamp_end": "04:10",
+      "transcript_snippet": "So there are two repos now here. One is innovation lab agents... This is basically all the code for the agents.",
+      "dependencies": [],
+      "verification": "",
+      "keywords": [
+        "github",
+        "repository",
+        "innovation-lab-agents",
+        "source code"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the root directory structure of the main agent code repository.",
+      "frame_file": "frame_03_30.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 3,
+      "title": "Explain Shared Database Setup",
+      "summary": "Explain that agents use a shared PostgreSQL database instead of local storage (`ctx.storage`) to maintain state across multiple replicas.",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "browser",
+      "what_is_on_screen": "GitHub view of `innovation-lab-agents/agents-db/init/001_init.sql`, showing SQL commands to create schemas and tables.",
+      "timestamp_start": "04:10",
+      "timestamp_end": "05:00",
+      "transcript_snippet": "we are not storing to storage anymore, but we are doing it to DB, there's a reason for that.",
+      "dependencies": [
+        2
+      ],
+      "verification": "",
+      "keywords": [
+        "database",
+        "postgresql",
+        "state management",
+        "replicas"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the SQL initialization script for the shared agent database.",
+      "frame_file": "frame_04_10.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 4,
+      "title": "Review Shared Agent Code",
+      "summary": "Show the `agents_shared` folder, which contains reusable modules for features like Cloudinary integration, Stripe payments, Sentry logging, and rate limiting.",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "browser",
+      "what_is_on_screen": "GitHub view of `innovation-lab-agents/agents_shared/agents_shared/`, showing files like `chat.py`, `cloudinary.py`, `payment.py`, `stripe_payment.py`.",
+      "timestamp_start": "05:00",
+      "timestamp_end": "05:45",
+      "transcript_snippet": "once you get your agent here, right, and there's some agent shared code, let's say you want to upload anything to cloudinary... you want to enable stripe payments... you can directly import these into your agents.",
+      "dependencies": [
+        2
+      ],
+      "verification": "",
+      "keywords": [
+        "shared code",
+        "modules",
+        "cloudinary",
+        "stripe",
+        "sentry"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the contents of the shared library used by multiple agents.",
+      "frame_file": "frame_05_00.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 5,
+      "title": "Examine Agent Environment Configuration",
+      "summary": "Look at an example agent's `.env.example` file to understand how environment variables control agent behavior, such as enabling/disabling specific payment methods.",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "browser",
+      "what_is_on_screen": "GitHub view of `innovation-lab-agents/agents/asi1-flight-agent/.env.example`, showing various configuration flags.",
+      "timestamp_start": "05:45",
+      "timestamp_end": "07:15",
+      "transcript_snippet": "inside every agent, see everything is getting controlled with environment or config variables... you want to enable stripe, you can directly enable from here.",
+      "dependencies": [
+        2
+      ],
+      "verification": "",
+      "keywords": [
+        "environment variables",
+        "configuration",
+        ".env",
+        "feature flags"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the structure of an agent's environment configuration file.",
+      "frame_file": "frame_05_45.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 6,
+      "title": "Explain Agent Code PR and Build Process",
+      "summary": "Explain that changes to the agent code require a Pull Request. Once merged to the `main` branch, a GitHub Action automatically builds and pushes a new Docker image for the modified agent.",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "browser",
+      "what_is_on_screen": "GitHub Actions view showing a successful run of the `build-and-push.yaml` workflow, with jobs for building specific agents like `veo3-agent`.",
+      "timestamp_start": "07:15",
+      "timestamp_end": "09:50",
+      "transcript_snippet": "when you create a PR here... once I approve it, what happens is in actions, there's a main branch getting triggered... it detects if the changes are only within an agent, it will just build that agent.",
+      "dependencies": [
+        2
+      ],
+      "verification": "Check the GitHub Actions tab to ensure the build workflow completes successfully and generates a new image tag.",
+      "keywords": [
+        "pull request",
+        "github actions",
+        "CI/CD",
+        "docker build",
+        "image tag"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the GitHub Actions workflow that automatically builds Docker images upon merge.",
+      "frame_file": "frame_07_15.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 7,
+      "title": "Introduce the Infrastructure Repository",
+      "summary": "Navigate to the `agents-infra` GitHub repository, which contains the Kubernetes deployment configurations (Helm charts/values) for the agents.",
+      "step_type": "navigation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "browser",
+      "what_is_on_screen": "GitHub repository page for `fetchai/agents-infra`, showing folders like `deployment-v2/core`.",
+      "timestamp_start": "09:50",
+      "timestamp_end": "11:00",
+      "transcript_snippet": "also you need something on the infrastructure side... where to actually host it or how do we give the environment variables to the agent. So this is another repo... agents infra.",
+      "dependencies": [],
+      "verification": "",
+      "keywords": [
+        "infrastructure",
+        "kubernetes",
+        "deployment",
+        "agents-infra"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the root of the infrastructure configuration repository.",
+      "frame_file": "frame_09_50.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 8,
+      "title": "Review Agent App Configuration (ArgoCD Application)",
+      "summary": "Examine the `apps/agents/<agent-name>.yaml` file, which defines the ArgoCD Application resource, pointing to the Helm chart and the specific values file for the agent.",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "browser",
+      "what_is_on_screen": "GitHub view of `agents-infra/deployment-v2/core/apps/agents/veo3-agent.yaml`, showing an ArgoCD Application definition.",
+      "timestamp_start": "11:00",
+      "timestamp_end": "12:30",
+      "transcript_snippet": "you have to create two more files for kubernetes... there are two folders apps and values... this is the name of the application on Argo CD... and this one is for having the values.",
+      "dependencies": [
+        7
+      ],
+      "verification": "",
+      "keywords": [
+        "argocd",
+        "application",
+        "helm",
+        "apps folder"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the ArgoCD Application manifest that links the agent to its configuration.",
+      "frame_file": "frame_11_00.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 9,
+      "title": "Review Agent Values Configuration (Helm Values)",
+      "summary": "Examine the `values/agents/values-<agent-name>.yaml` file. This file contains the actual configuration for the deployment, including the Docker image tag, environment variables, secrets mapping, and replica counts.",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "browser",
+      "what_is_on_screen": "GitHub view of `agents-infra/deployment-v2/core/values/agents/values-veo3-agent.yaml`, showing image tags, configs, and secrets.",
+      "timestamp_start": "12:30",
+      "timestamp_end": "14:30",
+      "transcript_snippet": "in values dot agents will keep values for that particular agent... you only have to change the image tag for the very first time... then all the configs will be present here.",
+      "dependencies": [
+        7
+      ],
+      "verification": "",
+      "keywords": [
+        "helm values",
+        "configuration",
+        "image tag",
+        "environment variables",
+        "replicas"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the detailed Helm values file where agent-specific configurations are defined.",
+      "frame_file": "frame_12_30.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 10,
+      "title": "Explain Secrets Management in Infrastructure",
+      "summary": "Explain how sensitive information (API keys, seeds) is handled. They are stored in GCP Secret Manager and referenced in the `values.yaml` file under the `secrets` section. Note the specific camelCase naming convention required for the `property` field.",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "browser",
+      "what_is_on_screen": "GitHub view of `values-veo3-agent.yaml` scrolled down to the `secrets` section, showing mappings like `name: GEMINI_API_KEY`, `property: geminiApiKey`.",
+      "timestamp_start": "14:30",
+      "timestamp_end": "15:45",
+      "transcript_snippet": "we'll have some secrets as well right... these are the secrets which cannot be shared... where we are storing the actual variables we keep it like this... property will be what we are saving it as, so it will be camel case.",
+      "dependencies": [
+        9
+      ],
+      "verification": "",
+      "keywords": [
+        "secrets",
+        "gcp secret manager",
+        "camelCase",
+        "security"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Highlights the specific syntax required for mapping external secrets into the Kubernetes deployment.",
+      "frame_file": "frame_14_30.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 11,
+      "title": "Explain Infrastructure PR Process",
+      "summary": "Explain that changes to the infrastructure repo (like updating an image tag or adding a new agent) require a PR to the `master` branch. The DevOps team owns this repo.",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "browser",
+      "what_is_on_screen": "GitHub view of the `agents-infra` repository.",
+      "timestamp_start": "15:45",
+      "timestamp_end": "17:50",
+      "transcript_snippet": "you need to create a PR here as well... once you create and get it merged on that agents repo, then we create infrastructure... in infra it's master and we are not the owners for it, the devops team is.",
+      "dependencies": [
+        7
+      ],
+      "verification": "",
+      "keywords": [
+        "pull request",
+        "infrastructure",
+        "devops",
+        "master branch"
+      ],
+      "important_visual_moment": false,
+      "visual_description": "",
+      "frame_file": "frame_15_45.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 12,
+      "title": "Deep Dive into Database Schema for Multi-Replica Agents",
+      "summary": "Review the PostgreSQL database schema used by the agents. Explain that because agents run with multiple replicas, a shared database is required to maintain state (sessions, chat messages, rate limits, payment intents) so any replica can handle incoming messages.",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "browser",
+      "what_is_on_screen": "GitHub view of `innovation-lab-agents/agents-db/init/001_init.sql`, showing table definitions for `sessions`, `chat_messages`, `rate_limit_events`, etc.",
+      "timestamp_start": "17:50",
+      "timestamp_end": "22:50",
+      "transcript_snippet": "why are we using DB is you can see we have multiple replicas for our agent... if the mailbox is running at 10 different places and when you send a message to agent all 10 will get it... for this purpose we have single source of truth.",
+      "dependencies": [
+        3
+      ],
+      "verification": "",
+      "keywords": [
+        "database schema",
+        "replicas",
+        "state management",
+        "idempotency",
+        "single source of truth"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the specific database tables used to manage state across distributed agent instances.",
+      "frame_file": "frame_17_50.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 13,
+      "title": "Introduce ArgoCD for Continuous Deployment",
+      "summary": "Navigate to the ArgoCD dashboard. Explain that ArgoCD monitors the `agents-infra` repository and automatically applies changes (like updated image tags) to the Kubernetes cluster.",
+      "step_type": "navigation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "dashboard",
+      "what_is_on_screen": "ArgoCD dashboard (`argo.fetch-ai.com`) showing multiple deployed applications, including `prod-v2-veo3-agent`.",
+      "timestamp_start": "22:50",
+      "timestamp_end": "25:50",
+      "transcript_snippet": "to actually deploy it on the infrastructure what we have to do is we have something known as Argo CD... Argo CD is the continuous deployment platform.",
+      "dependencies": [
+        11
+      ],
+      "verification": "Log in to ArgoCD and verify the application status is 'Healthy' and 'Synced'.",
+      "keywords": [
+        "argocd",
+        "continuous deployment",
+        "gitops",
+        "dashboard"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the ArgoCD interface used for managing Kubernetes deployments.",
+      "frame_file": "frame_22_50.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 14,
+      "title": "View Application Details in ArgoCD",
+      "summary": "Click into a specific application (e.g., `prod-v2-veo3-agent`) in ArgoCD to view its deployed resources, such as Deployments, ReplicaSets, Pods, ConfigMaps, and Secrets.",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "dashboard",
+      "what_is_on_screen": "ArgoCD application details view for `prod-v2-veo3-agent`, showing a tree graph of Kubernetes resources.",
+      "timestamp_start": "25:50",
+      "timestamp_end": "26:40",
+      "transcript_snippet": "let's say I'm into this agent now... we can see that two different replicas... you can see all the versions... this is all managed by devops team.",
+      "dependencies": [
+        13
+      ],
+      "verification": "",
+      "keywords": [
+        "argocd",
+        "application details",
+        "kubernetes resources",
+        "pods",
+        "replicas"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the resource tree for a deployed agent, illustrating its components in the cluster.",
+      "frame_file": "frame_25_50.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 15,
+      "title": "Monitor Agent Logs using Grafana and Loki",
+      "summary": "Navigate to Grafana to view application logs. Use the Explore tab, select the Loki data source, and filter logs using labels like `namespace=\"agents\"` and `container=\"<agent-name>\"`.",
+      "step_type": "navigation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "dashboard",
+      "what_is_on_screen": "Grafana Explore view, querying Loki logs with the filter `{namespace=\"agents\", container=\"veo3-agent\"}`.",
+      "timestamp_start": "26:40",
+      "timestamp_end": "28:50",
+      "transcript_snippet": "there's a platform known as grafana where we see all the logs... I go to explore and in kubernetes we have namespace which is agents... and we have the containers... let's say I go to veo3 now.",
+      "dependencies": [],
+      "verification": "Logs for the selected agent should appear in the Grafana dashboard.",
+      "keywords": [
+        "grafana",
+        "loki",
+        "logging",
+        "monitoring",
+        "troubleshooting"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows how to query and view centralized logs for the deployed agents.",
+      "frame_file": "frame_26_40.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 16,
+      "title": "Discuss the Unified Movie Agent Task",
+      "summary": "Discuss the goal of replacing the complex 29-agent system with a single 'Unified Movie Agent' to improve reliability, reduce latency, and simplify deployment.",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "other",
+      "what_is_on_screen": "Google Meet call interface.",
+      "timestamp_start": "28:50",
+      "timestamp_end": "31:20",
+      "transcript_snippet": "I made the entire system ready for the 29 agents deployment on agentverse... but simultaneously since I was not sure like how efficient that would be, I also made another version where this entire thing can be done with one agent itself.",
+      "dependencies": [
+        1
+      ],
+      "verification": "",
+      "keywords": [
+        "unified agent",
+        "refactoring",
+        "optimization",
+        "architecture change"
+      ],
+      "important_visual_moment": false,
+      "visual_description": "",
+      "frame_file": "frame_28_50.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 17,
+      "title": "Code Walkthrough: Unified Movie Agent Coordinator",
+      "summary": "Review the code for the new Unified Movie Agent in VS Code. Examine `coordinator_agent.py` to see how it orchestrates the video generation process by making parallel API calls instead of relying on separate uAgents.",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [
+        "coordinator_agent.py"
+      ],
+      "config_changes": [],
+      "tool_context": "IDE",
+      "what_is_on_screen": "VS Code showing `coordinator_agent.py` from the `caltrain/gemini-quickstart/realtime-movie-director` project. The code shows lists of agent addresses and logic for fanning out requests.",
+      "timestamp_start": "31:20",
+      "timestamp_end": "34:00",
+      "transcript_snippet": "the main coordinator agent will take the prompt and this creative director agent will convert into eight scenes... then parallelly it dispatches eight prompts to VO and all.",
+      "dependencies": [
+        16
+      ],
+      "verification": "",
+      "keywords": [
+        "code walkthrough",
+        "python",
+        "asyncio",
+        "orchestration",
+        "parallel processing"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the core logic of the new unified agent architecture.",
+      "frame_file": "frame_31_20.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 18,
+      "title": "Code Walkthrough: Video Generation Module",
+      "summary": "Review `video.py` to see how the unified agent handles video generation using the Google GenAI SDK and `httpx` for downloading assets.",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [
+        "video.py"
+      ],
+      "config_changes": [],
+      "tool_context": "IDE",
+      "what_is_on_screen": "VS Code showing `video.py` from the `unified-movie-agent/pipeline` folder. The code shows imports for `google.genai` and `httpx`.",
+      "timestamp_start": "34:00",
+      "timestamp_end": "36:40",
+      "transcript_snippet": "instead of calling eight agents, there is only one assembly, one music, one TTS, and one video. And internally it will just call APIs, API calls.",
+      "dependencies": [
+        17
+      ],
+      "verification": "",
+      "keywords": [
+        "video generation",
+        "api integration",
+        "genai sdk"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the implementation details for interacting with the video generation API.",
+      "frame_file": "frame_34_00.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 19,
+      "title": "Code Walkthrough: Assembly Module",
+      "summary": "Review `assembly_agent4.py` (or similar assembly script) to see how the agent uses `ffmpeg` via `subprocess` to combine the generated video, voiceover, and music tracks.",
+      "step_type": "explanation",
+      "commands": [],
+      "files_modified": [
+        "assembly_agent4.py"
+      ],
+      "config_changes": [],
+      "tool_context": "IDE",
+      "what_is_on_screen": "VS Code showing `assembly_agent4.py`. The docstring explains it receives URLs, downloads files, synchronizes timing, mixes audio, and combines audio with video using FFmpeg.",
+      "timestamp_start": "36:40",
+      "timestamp_end": "37:20",
+      "transcript_snippet": "assembly agent assembles first, second, third into one video... and then story stitcher agent will combine all the eight scenes into one.",
+      "dependencies": [
+        17
+      ],
+      "verification": "",
+      "keywords": [
+        "ffmpeg",
+        "video assembly",
+        "audio mixing",
+        "subprocess"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the logic for assembling the final video artifact.",
+      "frame_file": "frame_36_40.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 20,
+      "title": "Demo: Unified Movie Agent Execution",
+      "summary": "Demonstrate the Unified Movie Agent in the ASI1 chat interface. Send a prompt to generate a short film and observe the agent's progress updates (story planning, generating assets, final assembly).",
+      "step_type": "verification",
+      "commands": [
+        "@agent1qfhqucgghqyw4e4axxpnxguewztd3u2q5k9qdkq36kuxhe3wlalvzflmwt8 I want to make a short film for this story : A fat cat, a golden retriever puppy, and noddy go on an adventure in a dangerous forest."
+      ],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "ASI1 (Chat Interface)",
+      "what_is_on_screen": "ASI1 chat interface showing the prompt sent to `unified_movie_agent` and the agent's responses, including the generated story plan and progress indicators.",
+      "timestamp_start": "37:20",
+      "timestamp_end": "39:20",
+      "transcript_snippet": "I want to make a short film of a fat cat, golden retriever... the topic... and then you have scenes.",
+      "dependencies": [
+        16
+      ],
+      "verification": "The agent should respond with a story plan and eventually provide links to the generated video and audio assets.",
+      "keywords": [
+        "demo",
+        "execution",
+        "prompting",
+        "video generation"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the user experience of interacting with the new unified agent.",
+      "frame_file": "frame_37_20.png",
+      "enhanced_visual": null
+    },
+    {
+      "step_id": 21,
+      "title": "Demo: Review Generated Video",
+      "summary": "Watch the final video generated by the Unified Movie Agent to verify the output quality and consistency.",
+      "step_type": "verification",
+      "commands": [],
+      "files_modified": [],
+      "config_changes": [],
+      "tool_context": "ASI1 (Chat Interface)",
+      "what_is_on_screen": "ASI1 chat interface playing the final assembled video showing a boy, a cat, and a dog in a forest.",
+      "timestamp_start": "39:20",
+      "timestamp_end": "43:00",
+      "transcript_snippet": "Are you able to hear the sound? No, but it is fine. I just want to check the video getting there.",
+      "dependencies": [
+        20
+      ],
+      "verification": "The video should play correctly, showing the requested characters and scenes.",
+      "keywords": [
+        "video playback",
+        "result verification",
+        "quality check"
+      ],
+      "important_visual_moment": true,
+      "visual_description": "Shows the final output produced by the agent workflow.",
+      "frame_file": "frame_39_20.png",
+      "enhanced_visual": null
+    }
+  ],
+  "all_commands": [
+    "@agent1qfhqucgghqyw4e4axxpnxguewztd3u2q5k9qdkq36kuxhe3wlalvzflmwt8 I want to make a short film for this story : A fat cat, a golden retriever puppy, and noddy go on an adventure in a dangerous forest."
+  ]
+}
