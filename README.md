@@ -2,6 +2,8 @@
 
 Turn workflow recordings into structured, searchable operational knowledge.
 
+# Demo Video : https://youtu.be/OaMGcQE9tro
+
 ## The Problem
 
 A huge amount of operational knowledge inside companies lives in screen recordings — knowledge transfer sessions, onboarding walkthroughs, setup demos, internal tutorials. These recordings are almost impossible to reuse. When someone needs to reproduce a process, they rewatch long videos, pause constantly, and manually extract steps, commands, and configuration details.
